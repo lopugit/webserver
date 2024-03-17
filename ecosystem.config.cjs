@@ -3,7 +3,7 @@ module.exports = {
     {
       script: 'npm run start',
       name: 'webserver',
-      watch: ['./'],
+      watch: ['./', '/etc/hosts'],
       node_args: '-r esm'
     }
   ]
