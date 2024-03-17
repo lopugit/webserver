@@ -1,12 +1,5 @@
 import fs from 'fs';
 
-const sitesToExport = [
-  {
-    name: 'thingtime',
-    port: 9999
-  }
-];
-
 const hostsContentRaw = fs.readFileSync('/etc/hosts', 'utf8');
 
 // remove any text before first # webserver start
@@ -15,17 +8,29 @@ const hostsContent = hostsContentRaw.split('# webserver start').slice(1).join('#
 // extract hostsContent split by # webserver start lines but keep the name of the site
 const hostsSites = hostsContent.split('# webserver start').map((site) => {
   // get name of site
-  const lines = site.split('\n').map((line) => {
+  const rawLines = site.split('\n');
+
+  const definition = rawLines[0].trim();
+
+  const name = definition.split(' ')[0];
+
+  // extract port from definition string in formart port:XXXX
+  // use regexp
+  const port = definition.match(/port:(\d+)/)[1];
+
+  const lines = rawLines.slice(1);
+
+  const domains = lines.map((line) => {
     // split ip and domain
-    const [ip, domain] = line.split('\t');
+    const sanitisedLine = line.replace('\t', ' ').trim();
+    const [ip, domain] = sanitisedLine.split(' ');
     return domain || line.trim();
   });
-  const name = lines[0];
-  const domains = lines.slice(1);
-  return { name, domains };
+
+  return { name, port, domains };
 });
 
-export const sites = sitesToExport
+const toExport = hostsSites
   .map((site) => {
     const hostDetails = hostsSites.find((host) => host.name === site.name);
 
@@ -39,3 +44,5 @@ export const sites = sitesToExport
   })
   .flat()
   .filter((site) => site.domain);
+
+export const sites = toExport;
